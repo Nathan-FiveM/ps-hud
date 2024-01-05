@@ -12,7 +12,10 @@ shared_scripts {
 	'uiconfig.lua'
 }
 
-client_script 'client.lua'
+client_scripts {
+	'client.lua',
+	'HRSGears.lua'
+}
 server_script 'server.lua'
 lua54 'yes'
 use_fxv2_oal 'yes'

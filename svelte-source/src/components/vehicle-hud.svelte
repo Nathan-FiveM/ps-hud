@@ -5,6 +5,7 @@
   import DebugStore from '../stores/debugStore';
   import VehicleHudStore from '../stores/vehicleHudStore';
   import PartialCircleRing from './hud-shapes/partial-circle-ring.svelte';
+  import PartialCircleGearRing from './hud-shapes/partial-circle-ring-gear.svelte';
 
   // TODO see if most of these components can be under the same responsive class div, need to test once this is working
 </script>
@@ -14,6 +15,18 @@
     <PartialCircleRing maxLengthDisplay={66} rotateDegree={212} ringSize={5.5} progressColor={"white"}
       outlineColor={"black"} outlineColorOpacity={0.6} height={60} width={60} progressValue={$VehicleHudStore.speed}
       text={"MPH"} displayNumber={$VehicleHudStore.speed} maxProgressValue={180}
+    />
+  </div>
+  <div class="responsive" id="revsometer">
+    <PartialCircleRing maxLengthDisplay={66} rotateDegree={212} ringSize={5.5} progressColor={$VehicleHudStore.revsColor}
+      outlineColor={"black"} outlineColorOpacity={0.6} height={60} width={60} progressValue={$VehicleHudStore.revs}
+      text={"RPM"} displayNumber={$VehicleHudStore.revs} maxProgressValue={100}
+    />
+  </div>
+  <div class="responsive" id="gearometer">
+    <PartialCircleGearRing maxLengthDisplay={66} rotateDegree={212} ringSize={5.5} progressColor={"white"}
+      outlineColor={"black"} outlineColorOpacity={0.6} height={60} width={60} progressValue={$VehicleHudStore.gear}
+      text={$VehicleHudStore.gear} displayNumber={$VehicleHudStore.gear} maxProgressValue={9}
     />
   </div>
   <div class="responsive" id="fuelgauge">
@@ -61,11 +74,21 @@
   }
   #speedometer {
     position: relative;
-    left: 2.5vh!important;
+    left: 2.6vh!important;
+  }
+  #revsometer {
+    position: relative;
+    left: 2.6vh!important;
+    bottom: 12.0vh!important;
+  }
+  #gearometer {
+    position: relative;
+    left: 2.6vh!important;
+    bottom: 19.0vh!important;
   }
   #fuelgauge {
     position: relative;
-    left: 7vh!important;
+    left: 8vh!important;
     bottom: 6.7vh!important;
   }
   #altitudegauge {

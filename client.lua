@@ -25,6 +25,8 @@ local dev = false
 local admin = false
 local playerDead = false
 local showMenu = false
+local gear = 0
+local revs = 0
 local showCircleB = false
 local showSquareB = false
 local CinematicHeight = 0.2
@@ -34,6 +36,7 @@ local Menu = {
     isOutMapChecked = true, -- isOutMapChecked
     isOutCompassChecked = true, -- isOutCompassChecked
     isCompassFollowChecked = true, -- isCompassFollowChecked
+    isCrosshairChecked = true, -- isCrosshairChecked
     isOpenMenuSoundsChecked = true, -- isOpenMenuSoundsChecked
     isResetSoundsChecked = true, -- isResetSoundsChecked
     isListSoundsChecked = true, -- isListSoundsChecked
@@ -91,6 +94,7 @@ local function loadSettings()
     QBCore.Functions.Notify(Lang:t("notify.hud_settings_loaded"), "success")
     Wait(1000)
     TriggerEvent("hud:client:LoadMap")
+    TriggerEvent("hud:client:LoadCross")
 end
 
 local function SendAdminStatus()
@@ -180,12 +184,19 @@ RegisterNUICallback('closeMenu', function(_, cb)
     SetNuiFocus(false, false)
 end)
 
-RegisterKeyMapping('menu', Lang:t('info.open_menu'), 'keyboard', Config.OpenMenu)
+RegisterNetEvent("lj-menu:Client:Openmenu", function()
+    Wait(50)
+    if showMenu then return end
+    TriggerEvent("hud:client:playOpenMenuSounds")
+    SetNuiFocus(true, true)
+    SendNUIMessage({ action = "open" })
+    showMenu = true
+end)
 
 -- Reset hud
 local function restartHud()
     TriggerEvent("hud:client:playResetHudSounds")
-    QBCore.Functions.Notify(Lang:t("notify.hud_restart"), "error")
+    --QBCore.Functions.Notify(Lang:t("notify.hud_restart"), "error")
     Wait(1500)
     if IsPedInAnyVehicle(PlayerPedId()) then
         SendNUIMessage({
@@ -214,12 +225,13 @@ local function restartHud()
         show = true,
     })
     Wait(500)
-    QBCore.Functions.Notify(Lang:t("notify.hud_start"), "success")
+    --QBCore.Functions.Notify(Lang:t("notify.hud_start"), "success")
     SendNUIMessage({
         action = 'menu',
         topic = 'restart',
     })
 end
+exports("restartHud", restartHud)
 
 RegisterNUICallback('restartHud', function(_, cb)
     cb({})
@@ -240,9 +252,6 @@ end)
 
 RegisterNetEvent("hud:client:resetStorage", function()
     Wait(50)
-    if Menu.isResetSoundsChecked then
-        TriggerServerEvent("InteractSound_SV:PlayOnSource", "airwrench", 0.1)
-    end
     QBCore.Functions.TriggerCallback('hud:server:getMenu', function(menu) loadSettings(menu); SetResourceKvp('hudSettings', json.encode(menu)) end)
 end)
 
@@ -261,13 +270,11 @@ end)
 RegisterNetEvent("hud:client:playOpenMenuSounds", function()
     Wait(50)
     if not Menu.isOpenMenuSoundsChecked then return end
-    TriggerServerEvent("InteractSound_SV:PlayOnSource", "monkeyopening", 0.5)
 end)
 
 RegisterNetEvent("hud:client:playCloseMenuSounds", function()
     Wait(50)
     if not Menu.isOpenMenuSoundsChecked then return end
-    TriggerServerEvent("InteractSound_SV:PlayOnSource", "catclosing", 0.05)
 end)
 
 RegisterNUICallback('resetHudSounds', function(data, cb)
@@ -284,7 +291,6 @@ end)
 RegisterNetEvent("hud:client:playResetHudSounds", function()
     Wait(50)
     if not Menu.isResetSoundsChecked then return end
-    TriggerServerEvent("InteractSound_SV:PlayOnSource", "airwrench", 0.1)
 end)
 
 RegisterNUICallback('checklistSounds', function(data, cb)
@@ -301,7 +307,6 @@ end)
 RegisterNetEvent("hud:client:playHudChecklistSound", function()
     Wait(50)
     if not Menu.isListSoundsChecked then return end
-    TriggerServerEvent("InteractSound_SV:PlayOnSource", "shiftyclick", 0.5)
 end)
 
 RegisterNUICallback('showOutMap', function(data, cb)
@@ -342,6 +347,18 @@ RegisterNUICallback('showFollowCompass', function(data, cb)
         Menu.isCompassFollowChecked = false
     end
     TriggerEvent("hud:client:playHudChecklistSound")
+end)
+
+RegisterNUICallback('showCrosshair', function(data, cb)
+    cb({})
+	Wait(5000)
+    checked = data.checked
+    if checked then
+        Menu.isCrosshairChecked = true
+    else
+        Menu.isCrosshairChecked = false
+    end
+    TriggerEvent("hud:client:ToggleCross", checked)
 end)
 
 RegisterNUICallback('showMapNotif', function(data, cb)
@@ -395,6 +412,15 @@ RegisterNUICallback('HideMap', function(data, cb)
     end
     DisplayRadar(Menu.isMapEnabledChecked)
     TriggerEvent("hud:client:playHudChecklistSound")
+end)
+RegisterNetEvent("hud:client:LoadCross", function()
+	Wait(50)
+    if Menu.isCrosshairChecked then
+        checked = true
+    else
+        checked = false
+    end
+    TriggerEvent("hud:client:ToggleCross", checked)
 end)
 
 RegisterNetEvent("hud:client:LoadMap", function()
@@ -599,6 +625,7 @@ RegisterNUICallback('updateMenuSettingsToClient', function(data, cb)
     Menu.isOutMapChecked = data.isOutMapChecked
     Menu.isOutCompassChecked = data.isOutCompassChecked
     Menu.isCompassFollowChecked = data.isCompassFollowChecked
+    Menu.isCrosshairChecked = data.isCrosshairChecked
     Menu.isOpenMenuSoundsChecked = data.isOpenMenuSoundsChecked
     Menu.isResetSoundsChecked = data.isResetSoundsChecked
     Menu.isListSoundsChecked = data.isListSoundsChecked
@@ -723,19 +750,6 @@ RegisterNetEvent('hud:client:EnhancementEffect', function(data)
     end
 end)
 
-RegisterCommand('+engine', function()
-    local vehicle = GetVehiclePedIsIn(PlayerPedId(), false)
-    if vehicle == 0 or GetPedInVehicleSeat(vehicle, -1) ~= PlayerPedId() then return end
-    if GetIsVehicleEngineRunning(vehicle) then
-        QBCore.Functions.Notify(Lang:t("notify.engine_off"))
-    else
-        QBCore.Functions.Notify(Lang:t("notify.engine_on"))
-    end
-    SetVehicleEngineOn(vehicle, not GetIsVehicleEngineRunning(vehicle), false, true)
-end)
-
-RegisterKeyMapping('+engine', Lang:t('info.toggle_engine'), 'keyboard', 'G')
-
 local function IsWhitelistedWeaponArmed(weapon)
     if weapon then
         for _, v in pairs(config.WhitelistedWeaponArmed) do
@@ -797,6 +811,8 @@ local function updatePlayerHud(data)
             engine = data[21],
             cinematic = data[22],
             dev = data[23],
+            gear = data[24],
+            revs = data[25],
         })
     end
 end
@@ -811,7 +827,9 @@ local prevVehicleStats = {
     nil, --[7] showAltitude
     nil, --[8] showSeatbelt
     nil, --[9] showSquareBorder
-    nil --[10] showCircleBorder
+    nil, --[10] showCircleBorder
+    nil, --[11] gear
+    nil --[12] revs
 }
 
 local function updateShowVehicleHud(show)
@@ -847,6 +865,8 @@ local function updateVehicleHud(data)
             showSeatbelt = data[8],
             showSquareB = data[9],
             showCircleB = data[10],
+            gear = data[11],
+            revs = data[12],
         })
     end
 end
@@ -886,7 +906,7 @@ CreateThread(function()
                 end
             end
 
-            playerDead = IsEntityDead(player) or PlayerData.metadata["inlaststand"] or PlayerData.metadata["isdead"] or false
+            playerDead = IsEntityDead(player) or PlayerData.metadata["isko"] or PlayerData.metadata["isdead"] or false
             parachute = GetPedParachuteState(player)
 
             -- Stamina
@@ -941,6 +961,8 @@ CreateThread(function()
                     -1,
                     Menu.isCineamticModeChecked,
                     dev,
+                    -1, -- gear
+                    -1, -- revs
                 })
             end
 
@@ -957,7 +979,14 @@ CreateThread(function()
                 end
 
                 wasInVehicle = true
-                
+
+                gearlol = exports.HRSGears:getSelectedGear()
+                rpms = GetVehicleCurrentRpm(vehicle)
+                if rpms >= 0.25 then
+                    newrpms = math.floor(rpms*100)
+                else
+                    newrpms = math.floor(rpms*4)
+                end
                 updatePlayerHud({
                     show,
                     GetEntityHealth(player) - 100,
@@ -982,6 +1011,8 @@ CreateThread(function()
                     (GetVehicleEngineHealth(vehicle) / 10),
                     Menu.isCineamticModeChecked,
                     dev,
+                    exports.HRSGears:getinfo(gearlol), -- gear
+                    newrpms, -- revs
                 })
 
                 updateVehicleHud({
@@ -995,6 +1026,8 @@ CreateThread(function()
                     showSeatbelt,
                     showSquareB,
                     showCircleB,
+                    exports.HRSGears:getinfo(gearlol), -- gear
+                    newrpms, -- revs
                 })
                 showAltitude = false
                 showSeatbelt = true
@@ -1035,12 +1068,16 @@ CreateThread(function()
     while true do
         if LocalPlayer.state.isLoggedIn then
             local ped = PlayerPedId()
-            if IsPedInAnyVehicle(ped, false) and not IsThisModelABicycle(GetEntityModel(GetVehiclePedIsIn(ped, false))) and not isElectric(GetVehiclePedIsIn(ped, false)) then
-                if exports[Config.FuelScript]:GetFuel(GetVehiclePedIsIn(ped, false)) <= 20 then -- At 20% Fuel Left
-                    if Menu.isLowFuelChecked then
-                        TriggerServerEvent("InteractSound_SV:PlayOnSource", "pager", 0.10)
-                        QBCore.Functions.Notify(Lang:t("notify.low_fuel"), "error")
-                        Wait(60000) -- repeats every 1 min until empty
+            local vehicle = GetVehiclePedIsIn(ped, false)
+            local DriverSeat = GetPedInVehicleSeat(vehicle, -1)
+            if IsPedInAnyVehicle(ped, false) and not IsThisModelABicycle(GetEntityModel(vehicle)) and not isElectric(vehicle) then
+                if exports[Config.FuelScript]:GetFuel(vehicle) <= 20 then -- At 20% Fuel Left
+                    if GetIsVehicleEngineRunning(vehicle) and DriverSeat then
+                        if Menu.isLowFuelChecked then
+                            TriggerServerEvent("InteractSound_SV:PlayOnSource", "pager", 0.10)
+                            QBCore.Functions.Notify(Lang:t("notify.low_fuel"), "error")
+                            Wait(300000) -- repeats every 5 min until empty
+                        end
                     end
                 end
             end
@@ -1058,27 +1095,38 @@ RegisterNetEvent('hud:client:ShowAccounts', function(type, amount)
             type = 'cash',
             cash = amount
         })
-    else
-        SendNUIMessage({
-            action = 'show',
-            type = 'bank',
-            bank = amount
-        })
     end
 end)
 
 RegisterNetEvent('hud:client:OnMoneyChange', function(type, amount, isMinus)
     cashAmount = PlayerData.money['cash']
     bankAmount = PlayerData.money['bank']
-		if type == 'cash' and amount == 0 then return end
-    SendNUIMessage({
-        action = 'updatemoney',
-        cash = cashAmount,
-        bank = bankAmount,
-        amount = amount,
-        minus = isMinus,
-        type = type
-    })
+    casinoAmount = PlayerData.money['casino']
+    if type == 'bank' then
+        if isMinus then
+            BankMsg = "$"..amount.." removed from your balance!"
+        else
+            BankMsg = "$"..amount.." deposited to your balance!"
+        end
+        TriggerEvent('qb-phone-new:client:BankNotify', BankMsg)
+        --exports['qb-phone']:PhoneNotification("LS BANK", msg, 'fas fa-money', 'rgb(50, 168, 82)', 2000)
+    elseif type == 'casino' then
+        if isMinus then
+            CasinoMsg = "$"..amount.." removed from your balance!"
+        else
+            CasinoMsg = "$"..amount.." deposited to your balance!"
+        end
+        TriggerEvent('qb-phone-new:client:CasinoNotify', CasinoMsg)
+        --exports['qb-phone']:PhoneNotification("Diamond Casino", msg, 'fas fa-money', 'rgb(50, 131, 168)', 2000)
+    else
+        SendNUIMessage({
+            action = 'updatemoney',
+            cash = cashAmount,
+            amount = amount,
+            minus = isMinus,
+            type = type
+        })
+    end
 end)
 
 -- Harness Check / Seatbelt Check
@@ -1090,10 +1138,12 @@ CreateThread(function()
             local ped = PlayerPedId()
             if IsPedInAnyVehicle(ped, false) then
                 hasHarness()
-                local veh = GetEntityModel(GetVehiclePedIsIn(ped, false))
-                if seatbeltOn ~= true and IsThisModelACar(veh) then
-                    TriggerEvent("InteractSound_CL:PlayOnOne", "beltalarm", 0.6)
-                end
+                --[[ 
+                    local veh = GetEntityModel(GetVehiclePedIsIn(ped, false))
+                    if seatbeltOn ~= true and IsThisModelACar(veh) then
+                        TriggerEvent("InteractSound_CL:PlayOnOne", "beltalarm", 0.2)
+                    end
+                ]]
             end
         end
     end

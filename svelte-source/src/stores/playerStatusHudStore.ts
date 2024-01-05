@@ -53,6 +53,8 @@ type playerHudUpdateMessageType = {
   harness: boolean,
   hp: number,
   speed: number,
+  gear: number,
+  revs: number,
   engine: number,
   cinematic: boolean,
   dev: boolean,
@@ -278,6 +280,8 @@ const store = () => {
         // I am guessing harness hp max is 20?
         state.icons.harness.progressValue = capAmountToHundred(data.hp*5);
         state.icons.cruise.progressValue = capAmountToHundred(data.speed);
+        // state.icons.cruise.progressValue = capAmountToHundred(data.gear);
+        state.icons.cruise.progressValue = capAmountToHundred(data.revs);
         // This needs to be a number so default to 0
         state.icons.nitro.progressValue = capAmountToHundred(data.nos || 0);
 

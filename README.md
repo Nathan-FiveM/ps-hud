@@ -9,10 +9,10 @@ Ultra customizable hud featuring a unique and robust settings menu. Change eveyt
 * [ps-buffs](https://github.com/Project-Sloth/ps-buffs)
 
 ### ⚠️Important:
+- **If the minimap is pulsating or flickering, make sure if you are using custom maps that you ensure ps-hud BEFORE map resource.**
 - **Do not rename this resource from ps-hud or you will encounter issues.**
 - Locale is now supported. Make sure that your qb-core is update. You can update it [here](https://github.com/qbcore-framework/qb-core).
 - **This script is fully open source, it has no obfuscation.** Svelte compiled the js when it gets build and original source code is here [svelte-source](https://github.com/Project-Sloth/ps-hud/tree/main/svelte-source).
-- **If the minimap is pulsating or flickering**, make sure if you are using custom maps that you ensure ps-hud BEFORE map resource or if another script use the `SetRadarZoom()` native for disable it there.
 
 <br>
 <br>
@@ -82,6 +82,4 @@ https://user-images.githubusercontent.com/89323760/170898540-5e3abd16-38bb-45d6-
 ### Credits:
 Inspiration and some code snippets from [Svelte & Lua Boilerplate](https://github.com/project-error/svelte-lua-boilerplate) by [Project Error](https://github.com/project-error)
 
-### Unsupported [ESX Version](https://github.com/reyyghi/ps-hud) made by [reyyghi](https://github.com/reyyghi)
-
-#### Copyright © 2022 Project Sloth.
+##### Copyright © 2022 Project Sloth.

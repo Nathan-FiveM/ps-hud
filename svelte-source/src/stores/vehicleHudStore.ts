@@ -2,6 +2,7 @@ import { writable } from 'svelte/store'
 import { capAmountToHundred } from '../types/types'
 
 type vehicleStatusType = {
+  revsColor: string,
   fuelColor: string,
   altitude: number,
   fuel: number,
@@ -13,6 +14,8 @@ type vehicleStatusType = {
   showSquareBorder: boolean,
   ShowCircle: boolean,
   showCircleBorder: boolean,
+  gear: number,
+  revs: number,
   seatbeltColor: string,
 }
 
@@ -27,6 +30,8 @@ type vehicleHudUpdateMessageType = {
   showSeatbelt: boolean,
   showSquareB: boolean,
   showCircleB: boolean, 
+  gear: number, 
+  revs: number, 
 }
 
 type vehicleHudShowMessage = {
@@ -38,6 +43,7 @@ type vehicleHudShowMessage = {
 const store = () => {
 
   const vehicleStatusState: vehicleStatusType = {
+    revsColor: "#FFFFFF",
     fuelColor: "#FFFFFF",
     altitude: 0,
     fuel: 0,
@@ -49,6 +55,8 @@ const store = () => {
     showSquareBorder: false,
     ShowCircle: false,
     showCircleBorder: false,
+    gear: 0,
+    revs: 0,
     seatbeltColor: "#e85b14",
   }
 
@@ -72,11 +80,33 @@ const store = () => {
         state.showAltitude = data.showAltitude;
         state.showSquareBorder = data.showSquareB;
         state.showCircleBorder = data.showCircleB;
+        state.gear = data.gear;
+        state.revs = data.revs;
 
         if (data.seatbelt) {
           state.showSeatBelt = false;
         } else {
           state.showSeatBelt = true;
+        }
+
+        if (data.revs <= 20) {
+          state.revsColor = "#FFFFFF";
+        } else if (data.revs <= 30) {
+          state.revsColor = "#FFFFFF";
+        } else if (data.revs <= 40) {
+          state.revsColor = "#fff700";
+        } else if (data.revs <= 50) {
+          state.revsColor = "#ffdd00";
+        } else if (data.revs <= 60) {
+          state.revsColor = "#ffc800";
+        } else if (data.revs <= 70) {
+          state.revsColor = "#ffa600";
+        } else if (data.revs <= 80) {
+          state.revsColor = "#ff8c00";
+        } else if (data.revs <= 90) {
+          state.revsColor = "#ff6600";
+        } else {
+          state.revsColor = "#ff0000";
         }
 
         if (data.fuel <= 20) {
