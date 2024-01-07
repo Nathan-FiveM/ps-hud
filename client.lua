@@ -980,7 +980,7 @@ CreateThread(function()
 
                 wasInVehicle = true
 
-                gearlol = exports["ps-hud"]:getSelectedGear()
+                gearlol = getSelectedGear()
                 rpms = GetVehicleCurrentRpm(vehicle)
                 if rpms >= 0.25 then
                     newrpms = math.floor(rpms*100)
@@ -1011,7 +1011,7 @@ CreateThread(function()
                     (GetVehicleEngineHealth(vehicle) / 10),
                     Menu.isCineamticModeChecked,
                     dev,
-                    exports["ps-hud"]:getinfo(gearlol), -- gear
+                    getinfo(gearlol), -- gear
                     newrpms, -- revs
                 })
 
@@ -1026,7 +1026,7 @@ CreateThread(function()
                     showSeatbelt,
                     showSquareB,
                     showCircleB,
-                    exports["ps-hud"]:getinfo(gearlol), -- gear
+                    getinfo(gearlol), -- gear
                     newrpms, -- revs
                 })
                 showAltitude = false
